@@ -1,12 +1,20 @@
 import cv2
 import ctypes
 from os import chdir
-from os.path import dirname
-from sys import executable
+from os.path import dirname, abspath
+from shutil import copyfile
+from sys import executable, argv
 
 chdir(dirname(executable))
 
-SPI_SETDESKWALLPAPER = 20 
+fps = 10
+
+if len(argv) == 2:
+  fps = int(argv[1])
+
+files = ["w"+str(i)+".jpg" for i in range(3)]
+
+SPI_SETDESKWALLPAPER = 20
 
 cap = cv2.VideoCapture('wallpaper.mp4')
 
@@ -15,9 +23,14 @@ if (cap.isOpened()== False):
 
 while 1:
   if cap.isOpened():
-    ret, frame = cap.read()
-    cv2.imwrite("image.jpg", frame)
-    ctypes.windll.user32.SystemParametersInfoA(SPI_SETDESKWALLPAPER, 0, "image.jpg" , 0)
-    cv2.waitKey(1000/24)
+    try:
+      ret, frame = cap.read()
+      fname = files[0]
+      files.append(files.pop(0))
+      cv2.imwrite(fname, frame)
+      ctypes.WinDLL('user32', use_last_error=True).SystemParametersInfoW(20, 0, abspath(fname), 3)
+      cv2.waitKey(int(1000/fps))
+    except:
+      cap = cv2.VideoCapture('wallpaper.mp4')
   else:
     cap = cv2.VideoCapture('wallpaper.mp4')
